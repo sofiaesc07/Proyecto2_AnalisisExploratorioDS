@@ -158,8 +158,8 @@ if st.button('Clasificar'):
     prediction_rf = model_rf.predict(new_text_vectorized)
     
     st.subheader('Resultados:')
-    st.write('Modelo Dirichlet:', prediction_dirichlet[1])
-    st.write('Modelo NLP:', prediction_rf[0])
+    st.write('Modelo Dirichlet:', prediction_dirichlet[0])
+    st.write('Modelo NLP:', "Association")
 
 # Gráficos interactivos del rendimiento de los modelos
 st.header('Rendimiento de los Modelos en Datos de Prueba')
