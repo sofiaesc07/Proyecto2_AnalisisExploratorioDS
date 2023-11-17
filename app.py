@@ -146,6 +146,7 @@ if 'Modelo NLP' in selected_algorithms or 'Ambos' in selected_algorithms:
 
 # Aplicación para ingresar nuevos datos y clasificar
 st.header('Clasificación de Nuevos Datos')
+new_text = st.text_area('Ingrese el titulo del articulo para clasificar:')
 new_text = st.text_area('Ingrese el texto para clasificar:')
 if st.button('Clasificar'):
     # Preprocesar el texto ingresado
@@ -157,7 +158,7 @@ if st.button('Clasificar'):
     prediction_rf = model_rf.predict(new_text_vectorized)
     
     st.subheader('Resultados:')
-    st.write('Modelo Dirichlet:', prediction_dirichlet[0])
+    st.write('Modelo Dirichlet:', prediction_dirichlet[1])
     st.write('Modelo NLP:', prediction_rf[0])
 
 # Gráficos interactivos del rendimiento de los modelos
@@ -193,5 +194,3 @@ plt.title('Distribución de Clases')
 plt.xlabel('Clase', color=color_palette['deep_analysis'])
 plt.ylabel('Frecuencia', color=color_palette['deep_analysis'])
 st.pyplot(plt)
-
-# You would continue to modify the rest of your Streamlit widgets and visualizations in a similar manner.
