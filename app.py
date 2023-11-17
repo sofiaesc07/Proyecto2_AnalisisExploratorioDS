@@ -25,17 +25,33 @@ color_palette = {
 # Inject custom CSS with st.markdown
 st.markdown(f"""
     <style>
+        body {{
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f4f4f4;
+        }}
         .reportview-container .markdown-text-container {{
-            font-family: sans-serif;
+            font-family: 'Helvetica Neue';
+            color: #4f4f4f;
         }}
         .reportview-container .main .block-container{{
-            max-width: 90%;
+            max-width: 95%;
+            padding: 2rem;
+            background-color: #fff;
         }}
-        
+        .stButton > button {{
+            color: #fff;
+            background-color: {color_palette['seriousness']};
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+        }}
+        .stTextInput > label, .stSelectbox > label {{
+            color: {color_palette['deep_analysis']};
+        }}
     </style>
 """, unsafe_allow_html=True)
-
 # Cargar el tokenizador de spaCy
+
 nlp = spacy.load("en_core_web_sm")
 
 # Cargar datos de relaciones
