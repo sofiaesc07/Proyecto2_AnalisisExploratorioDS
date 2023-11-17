@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import spacy
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-
 
 # Cargar el tokenizador de spaCy
 nlp = spacy.load("en_core_web_sm")
@@ -24,11 +24,11 @@ df_combined['abstract'] = df_combined['abstract'].astype(str)
 
 # Disminuir la presencia de las clases
 df_combined = shuffle(df_combined, random_state=42)
-association_subset = df_combined[df_combined['type'] == 'Association'].head(len(df_combined) // 150)
+association_subset = df_combined[df_combined['type'] == 'Association'].head(len(df_combined) // 90)
 df_combined = pd.concat([association_subset, df_combined[df_combined['type'] != 'Association']])
-pp_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 100)
+pp_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 80)
 df_combined = pd.concat([pp_subtet, df_combined[df_combined['type'] != 'Positive_Correlation']])
-nn_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 100)
+nn_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 70)
 df_combined = pd.concat([nn_subtet, df_combined[df_combined['type'] != 'Negative_Correlation']])
 
 # Separar datos en conjunto de entrenamiento y conjunto de prueba
@@ -63,6 +63,14 @@ model_dirichlet.fit(X_train_vectorized_nlp, y_train_nlp)
 model_rf = RandomForestClassifier()
 model_rf.fit(X_train_vectorized_nlp, y_train_nlp)
 
+# Predecir en datos de prueba
+predictions_dirichlet = model_dirichlet.predict(X_test_vectorized_nlp)
+predictions_rf = model_rf.predict(X_test_vectorized_nlp)
+
+# Calcular exactitud
+accuracy_dirichlet = accuracy_score(y_test_nlp, predictions_dirichlet)
+accuracy_rf = accuracy_score(y_test_nlp, predictions_rf)
+
 # Crear la aplicación con Streamlit
 st.title('Clasificación de Relaciones en Textos Biomédicos')
 
@@ -71,20 +79,22 @@ selected_algorithms = st.sidebar.multiselect('Seleccione los algoritmos', ['Mode
 
 # Mostrar resultados según algoritmos seleccionados
 if 'Modelo Dirichlet' in selected_algorithms or 'Ambos' in selected_algorithms:
-    predictions_dirichlet = model_dirichlet.predict(X_test_vectorized_nlp)
     st.header('Modelo Dirichlet')
     st.subheader('Matriz de Confusión:')
     st.write(confusion_matrix(y_test_nlp, predictions_dirichlet))
     st.subheader('Informe de Clasificación:')
     st.write(classification_report(y_test_nlp, predictions_dirichlet))
+    st.subheader('Exactitud:')
+    st.write(accuracy_dirichlet)
 
 if 'Modelo NLP' in selected_algorithms or 'Ambos' in selected_algorithms:
-    predictions_rf = model_rf.predict(X_test_vectorized_nlp)
     st.header('Modelo NLP')
     st.subheader('Matriz de Confusión:')
     st.write(confusion_matrix(y_test_nlp, predictions_rf))
     st.subheader('Informe de Clasificación:')
     st.write(classification_report(y_test_nlp, predictions_rf))
+    st.subheader('Exactitud:')
+    st.write(accuracy_rf)
 
 # Aplicación para ingresar nuevos datos y clasificar
 st.header('Clasificación de Nuevos Datos')
@@ -102,9 +112,28 @@ if st.button('Clasificar'):
     st.write('Modelo Dirichlet:', prediction_dirichlet[0])
     st.write('Modelo NLP:', prediction_rf[0])
 
-# Agregar gráficos interactivos del rendimiento de los modelos
+# Gráficos interactivos del rendimiento de los modelos
 st.header('Rendimiento de los Modelos en Datos de Prueba')
+# Gráfico circular para el Modelo Dirichlet
+fig_dirichlet = px.pie(names=['Correctas', 'Incorrectas'],
+                       values=[accuracy_dirichlet, 1 - accuracy_dirichlet],
+                       title='Exactitud del Modelo Dirichlet',
+                       labels={'names': 'Clasificación', 'values': 'Exactitud'})
 
-# Puedes agregar gráficos interactivos aquí usando bibliotecas como Plotly, Matplotlib, etc.
+# Configuración adicional para el gráfico circular del Modelo Dirichlet
+fig_dirichlet.update_traces(textinfo='percent+label', pull=[0.1, 0])
 
-# Fin de la aplicación
+# Mostrar el gráfico circular del Modelo Dirichlet
+st.plotly_chart(fig_dirichlet)
+
+# Gráfico circular para el Modelo NLP
+fig_nlp = px.pie(names=['Correctas', 'Incorrectas'],
+                 values=[accuracy_rf, 1 - accuracy_rf],
+                 title='Exactitud del Modelo NLP',
+                 labels={'names': 'Clasificación', 'values': 'Exactitud'})
+
+# Configuración adicional para el gráfico circular del Modelo NLP
+fig_nlp.update_traces(textinfo='percent+label', pull=[0.1, 0])
+
+# Mostrar el gráfico circular del Modelo NLP
+st.plotly_chart(fig_nlp)
