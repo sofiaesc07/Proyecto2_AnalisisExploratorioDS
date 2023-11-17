@@ -160,6 +160,45 @@ if 'Modelo NLP' in selected_algorithms or 'Ambos' in selected_algorithms:
     st.subheader('Exactitud:')
     st.write(accuracy_rf)
 
+tabs = st.tabs(["Modelos y Resultados", "Clasificación de Nuevos Datos"])
+with tabs[0]: 
+    # Contenido del primer tab (Modelos y Resultados)
+
+    # [3] Mejora de los gráficos
+    # Aquí irían las visualizaciones de los modelos y resultados
+
+    # Gráficos interactivos del rendimiento de los modelos
+    st.header('Rendimiento de los Modelos en Datos de Prueba')
+    
+    # Gráfico circular para el Modelo Dirichlet
+    fig_dirichlet = px.pie(names=['Correctas', 'Incorrectas'],
+                           values=[accuracy_dirichlet, 1 - accuracy_dirichlet],
+                           title='Exactitud del Modelo Dirichlet',
+                           labels={'names': 'Clasificación', 'values': 'Exactitud'},
+                           color_discrete_sequence=[color_palette['authority']])
+    fig_dirichlet.update_traces(textinfo='percent+label', pull=[0.1, 0])
+    st.plotly_chart(fig_dirichlet)
+
+    # Similar para Modelo NLP...
+
+with tabs[1]:
+    # Contenido del segundo tab (Clasificación de Nuevos Datos)
+
+    # [4] Usar spinner para operaciones largas
+    with st.spinner('Procesando...'):
+        # Aquí iría el código para clasificar nuevos datos
+
+    # Aplicación para ingresar nuevos datos y clasificar
+        st.header('Clasificación de Nuevos Datos')
+    new_text = st.text_area('Ingrese el texto para clasificar:')
+    if st.button('Clasificar'):
+        try:
+            # [4] Mensajes de alerta o información
+            # Código de clasificación
+            st.success('Clasificación completada con éxito.')
+        except Exception as e:
+            st.error(f'Error en la clasificación: {e}')
+
 # Aplicación para ingresar nuevos datos y clasificar
 st.header('Clasificación de Nuevos Datos')
 new_text = st.text_area('Ingrese el titulo del articulo para clasificar:')
