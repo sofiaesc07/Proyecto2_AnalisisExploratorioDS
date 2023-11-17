@@ -22,11 +22,11 @@ df_combined['abstract'] = df_combined['abstract'].astype(str)
 
 # Disminuir la presencia de las clases
 df_combined = shuffle(df_combined, random_state=42)
-association_subset = df_combined[df_combined['type'] == 'Association'].head(len(df_combined) // 150)
+association_subset = df_combined[df_combined['type'] == 'Association'].head(len(df_combined) // 90)
 df_combined = pd.concat([association_subset, df_combined[df_combined['type'] != 'Association']])
-pp_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 100)
+pp_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 90)
 df_combined = pd.concat([pp_subtet, df_combined[df_combined['type'] != 'Positive_Correlation']])
-nn_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 100)
+nn_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 90)
 df_combined = pd.concat([nn_subtet, df_combined[df_combined['type'] != 'Negative_Correlation']])
 
 # Separar datos en conjunto de entrenamiento y conjunto de prueba

@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import seaborn as sns
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -8,6 +10,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import spacy
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+
 
 # Cargar el tokenizador de spaCy
 nlp = spacy.load("en_core_web_sm")
@@ -26,9 +30,9 @@ df_combined['abstract'] = df_combined['abstract'].astype(str)
 df_combined = shuffle(df_combined, random_state=42)
 association_subset = df_combined[df_combined['type'] == 'Association'].head(len(df_combined) // 90)
 df_combined = pd.concat([association_subset, df_combined[df_combined['type'] != 'Association']])
-pp_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 80)
+pp_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 90)
 df_combined = pd.concat([pp_subtet, df_combined[df_combined['type'] != 'Positive_Correlation']])
-nn_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 70)
+nn_subtet = df_combined[df_combined['type'] == 'Positive_Correlation'].head(len(df_combined) // 90)
 df_combined = pd.concat([nn_subtet, df_combined[df_combined['type'] != 'Negative_Correlation']])
 
 # Separar datos en conjunto de entrenamiento y conjunto de prueba
@@ -82,15 +86,30 @@ if 'Modelo Dirichlet' in selected_algorithms or 'Ambos' in selected_algorithms:
     st.header('Modelo Dirichlet')
     st.subheader('Matriz de Confusión:')
     st.write(confusion_matrix(y_test_nlp, predictions_dirichlet))
+    plt.figure(figsize=(10,7))
+    sns.heatmap(confusion_matrix(y_test_nlp, predictions_dirichlet), annot=True, fmt='d')
+    plt.title('Matriz de Confusión para el Modelo Dirichlet')
+    plt.xlabel('Clase Predicha')
+    plt.ylabel('Clase Verdadera')
+    st.pyplot(plt)
     st.subheader('Informe de Clasificación:')
     st.write(classification_report(y_test_nlp, predictions_dirichlet))
     st.subheader('Exactitud:')
     st.write(accuracy_dirichlet)
+    
 
 if 'Modelo NLP' in selected_algorithms or 'Ambos' in selected_algorithms:
     st.header('Modelo NLP')
     st.subheader('Matriz de Confusión:')
     st.write(confusion_matrix(y_test_nlp, predictions_rf))
+    
+    plt.figure(figsize=(10,7))
+    sns.heatmap(confusion_matrix(y_test_nlp, predictions_rf), annot=True, fmt='d')
+    plt.title('Matriz de Confusión para el Modelo NLP')
+    plt.xlabel('Clase Predicha')
+    plt.ylabel('Clase Verdadera')
+    st.pyplot(plt)
+
     st.subheader('Informe de Clasificación:')
     st.write(classification_report(y_test_nlp, predictions_rf))
     st.subheader('Exactitud:')
@@ -137,3 +156,13 @@ fig_nlp.update_traces(textinfo='percent+label', pull=[0.1, 0])
 
 # Mostrar el gráfico circular del Modelo NLP
 st.plotly_chart(fig_nlp)
+
+
+plt.figure(figsize=(10,5))
+df_combined['type'].value_counts().plot(kind='bar')
+plt.title('Distribución de Clases')
+plt.xlabel('Clase')
+plt.ylabel('Frecuencia')
+st.pyplot(plt)
+
+
