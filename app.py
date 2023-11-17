@@ -1,4 +1,5 @@
 import streamlit as st
+import matplotlib.colors as mcolors
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -12,18 +13,39 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
+# Color Palette Dictionary
+color_palette = {
+    "tranquility": "#89CFF0",
+    "stability": "#72A0C1",
+    "seriousness": "#5F9EA0",
+    "deep_analysis": "#317873",
+    "authority": "#004953"
+}
+
+# Inject custom CSS with st.markdown
+st.markdown(f"""
+    <style>
+        .reportview-container .markdown-text-container {{
+            font-family: sans-serif;
+        }}
+        .reportview-container .main .block-container{{
+            max-width: 90%;
+        }}
+        
+    </style>
+""", unsafe_allow_html=True)
 
 # Cargar el tokenizador de spaCy
 nlp = spacy.load("en_core_web_sm")
 
-# Cargar datos de relaciones (donde se encuentra la columna 'abstract')
+# Cargar datos de relaciones
 df_relations = pd.read_csv('relations_train.csv', delimiter='\t')
 
-# Unir datos de relaciones con datos de abstractos utilizando 'abstract_id'
+# Unir datos de relaciones con datos de abstractos
 df_abstracts = pd.read_csv('abstracts_train.csv', delimiter='\t')
 df_combined = pd.merge(df_relations, df_abstracts, on='abstract_id')
 
-# Limpiar la columna 'abstract' convirtiendo todos los elementos a cadenas de texto
+# Limpiar la columna 'abstract'
 df_combined['abstract'] = df_combined['abstract'].astype(str)
 
 # Disminuir la presencia de las clases
@@ -41,11 +63,10 @@ train_data, test_data = train_test_split(df_combined, test_size=0.2, random_stat
 # Función para lematizar y procesar texto con spaCy
 def process_text(text):
     doc = nlp(text)
-    # Extraer lemas de las palabras y eliminar stopwords
     lemmas = [token.lemma_ for token in doc if not token.is_stop]
     return lemmas
 
-# Preprocesamiento de datos de entrenamiento para el modelo NLP
+# Preprocesamiento de datos de entrenamiento y de prueba
 X_train_nlp = train_data['abstract'].apply(process_text)
 y_train_nlp = train_data['type']
 
@@ -53,7 +74,6 @@ y_train_nlp = train_data['type']
 X_test_nlp = test_data['abstract'].apply(process_text)
 y_test_nlp = test_data['type']
 
-# Utilizar spaCy para lematizar texto y extraer características para el modelo NLP
 vectorizer_nlp = CountVectorizer()
 X_train_vectorized_nlp = vectorizer_nlp.fit_transform(X_train_nlp.apply(lambda x: ' '.join(x)))
 X_test_vectorized_nlp = vectorizer_nlp.transform(X_test_nlp.apply(lambda x: ' '.join(x)))
@@ -81,13 +101,22 @@ st.title('Clasificación de Relaciones en Textos Biomédicos')
 # Sidebar para selección de algoritmos
 selected_algorithms = st.sidebar.multiselect('Seleccione los algoritmos', ['Modelo Dirichlet', 'Modelo NLP', 'Ambos'])
 
+# Define the color palette using the provided hex colors
+
+colors = ['#89CFF0', '#004953']
+# Create a custom colormap
+custom_palette = mcolors.LinearSegmentedColormap.from_list('custom', colors)
+
+
+
+
 # Mostrar resultados según algoritmos seleccionados
 if 'Modelo Dirichlet' in selected_algorithms or 'Ambos' in selected_algorithms:
     st.header('Modelo Dirichlet')
     st.subheader('Matriz de Confusión:')
     st.write(confusion_matrix(y_test_nlp, predictions_dirichlet))
     plt.figure(figsize=(10,7))
-    sns.heatmap(confusion_matrix(y_test_nlp, predictions_dirichlet), annot=True, fmt='d')
+    sns.heatmap(confusion_matrix(y_test_nlp, predictions_dirichlet), annot=True, fmt='d', cmap=custom_palette)
     plt.title('Matriz de Confusión para el Modelo Dirichlet')
     plt.xlabel('Clase Predicha')
     plt.ylabel('Clase Verdadera')
@@ -96,7 +125,6 @@ if 'Modelo Dirichlet' in selected_algorithms or 'Ambos' in selected_algorithms:
     st.write(classification_report(y_test_nlp, predictions_dirichlet))
     st.subheader('Exactitud:')
     st.write(accuracy_dirichlet)
-    
 
 if 'Modelo NLP' in selected_algorithms or 'Ambos' in selected_algorithms:
     st.header('Modelo NLP')
@@ -104,7 +132,8 @@ if 'Modelo NLP' in selected_algorithms or 'Ambos' in selected_algorithms:
     st.write(confusion_matrix(y_test_nlp, predictions_rf))
     
     plt.figure(figsize=(10,7))
-    sns.heatmap(confusion_matrix(y_test_nlp, predictions_rf), annot=True, fmt='d')
+
+    sns.heatmap(confusion_matrix(y_test_nlp, predictions_rf), annot=True, fmt='d', cmap=custom_palette)
     plt.title('Matriz de Confusión para el Modelo NLP')
     plt.xlabel('Clase Predicha')
     plt.ylabel('Clase Verdadera')
@@ -137,7 +166,7 @@ st.header('Rendimiento de los Modelos en Datos de Prueba')
 fig_dirichlet = px.pie(names=['Correctas', 'Incorrectas'],
                        values=[accuracy_dirichlet, 1 - accuracy_dirichlet],
                        title='Exactitud del Modelo Dirichlet',
-                       labels={'names': 'Clasificación', 'values': 'Exactitud'})
+                       labels={'names': 'Clasificación', 'values': 'Exactitud'}, color_discrete_sequence=[color_palette['authority']])
 
 # Configuración adicional para el gráfico circular del Modelo Dirichlet
 fig_dirichlet.update_traces(textinfo='percent+label', pull=[0.1, 0])
@@ -149,7 +178,7 @@ st.plotly_chart(fig_dirichlet)
 fig_nlp = px.pie(names=['Correctas', 'Incorrectas'],
                  values=[accuracy_rf, 1 - accuracy_rf],
                  title='Exactitud del Modelo NLP',
-                 labels={'names': 'Clasificación', 'values': 'Exactitud'})
+                 labels={'names': 'Clasificación', 'values': 'Exactitud'}, color_discrete_sequence=[color_palette['deep_analysis']])
 
 # Configuración adicional para el gráfico circular del Modelo NLP
 fig_nlp.update_traces(textinfo='percent+label', pull=[0.1, 0])
@@ -157,12 +186,12 @@ fig_nlp.update_traces(textinfo='percent+label', pull=[0.1, 0])
 # Mostrar el gráfico circular del Modelo NLP
 st.plotly_chart(fig_nlp)
 
-
+# Distribución de Clases con matplotlib
 plt.figure(figsize=(10,5))
-df_combined['type'].value_counts().plot(kind='bar')
-plt.title('Distribución de Clases')
-plt.xlabel('Clase')
-plt.ylabel('Frecuencia')
+df_combined['type'].value_counts().plot(kind='bar', color=[color_palette['seriousness'], color_palette['stability']])
+plt.title('Distribución de Clases') 
+plt.xlabel('Clase', color=color_palette['deep_analysis'])
+plt.ylabel('Frecuencia', color=color_palette['deep_analysis'])
 st.pyplot(plt)
 
-
+# You would continue to modify the rest of your Streamlit widgets and visualizations in a similar manner.
